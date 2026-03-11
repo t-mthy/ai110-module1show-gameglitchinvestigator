@@ -10,13 +10,28 @@ def get_range_for_difficulty(difficulty: str):
     return 1, 100
 
 
+# FIX: Refactored parse_guess from app.py using Claude Code (Copilot Agent mode)
 def parse_guess(raw: str):
     """
     Parse user input into an int guess.
 
     Returns: (ok: bool, guess_int: int | None, error_message: str | None)
     """
-    raise NotImplementedError("Refactor this function from app.py into logic_utils.py")
+    if raw is None:
+        return False, None, "Enter a guess."
+
+    if raw == "":
+        return False, None, "Enter a guess."
+
+    try:
+        if "." in raw:
+            value = int(float(raw))
+        else:
+            value = int(raw)
+    except Exception:
+        return False, None, "That is not a number."
+
+    return True, value, None
 
 
 def check_guess(guess, secret):
