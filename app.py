@@ -53,8 +53,10 @@ if "history" not in st.session_state:
 
 st.subheader("Make a guess")
 
+# FIX: Changed hardcoded "1 and 100" to use actual low/high from difficulty settings.
+# Bug identified and fixed collaboratively with Claude Code (AI pair-programming).
 st.info(
-    f"Guess a number between 1 and 100. "
+    f"Guess a number between {low} and {high}. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
 

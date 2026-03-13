@@ -61,6 +61,70 @@ def test_attempts_left_decreases_after_guess():
         "After one guess, attempts left should be 7 for Normal difficulty"
     )
 
+
+# --- Tests for Bug Fix: Range display must use actual difficulty values ---
+# These tests parse the actual app.py source to verify the info message uses
+# the dynamic low/high variables, not hardcoded "1 and 100".
+
+def _get_range_display_format_string():
+    """Parse app.py's AST and extract the format string used in the
+    st.info() call that displays the guess range to the player."""
+    with open(APP_PATH) as f:
+        tree = ast.parse(f.read())
+
+    for node in ast.walk(tree):
+        # Look for: st.info(f"Guess a number between ...")
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "info"
+            and node.args
+            and isinstance(node.args[0], ast.JoinedStr)  # f-string
+        ):
+            # Reconstruct the f-string template to inspect its parts
+            parts = node.args[0].values
+            # Check if any part is a FormattedValue (i.e. {variable})
+            # vs all parts being plain Constant strings (hardcoded)
+            template_pieces = []
+            has_dynamic_range = False
+            for part in parts:
+                if isinstance(part, ast.Constant):
+                    template_pieces.append(str(part.value))
+                elif isinstance(part, ast.FormattedValue):
+                    # Extract the variable name used in the f-string
+                    if isinstance(part.value, ast.Name):
+                        template_pieces.append(f"{{{part.value.id}}}")
+                        if part.value.id in ("low", "high"):
+                            has_dynamic_range = True
+            return "".join(template_pieces), has_dynamic_range
+
+    raise RuntimeError("Could not find st.info() range display call in app.py")
+
+
+def test_range_display_uses_dynamic_variables():
+    """Verify app.py's info message uses {low} and {high}, not hardcoded '1 and 100'."""
+    template, has_dynamic = _get_range_display_format_string()
+    assert has_dynamic, (
+        f"Range display is hardcoded instead of using low/high variables. "
+        f"Found template: '{template}'"
+    )
+
+
+def test_range_display_contains_both_low_and_high():
+    """Verify both {low} and {high} appear in the range display string."""
+    template, _ = _get_range_display_format_string()
+    assert "{low}" in template, f"Missing {{low}} in range display: '{template}'"
+    assert "{high}" in template, f"Missing {{high}} in range display: '{template}'"
+
+
+def test_range_display_no_hardcoded_100():
+    """Verify the range display does not contain a hardcoded '100'."""
+    template, _ = _get_range_display_format_string()
+    assert "100" not in template, (
+        f"Range display still contains hardcoded '100': '{template}'"
+    )
+
+
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
     result = check_guess(50, 50)
