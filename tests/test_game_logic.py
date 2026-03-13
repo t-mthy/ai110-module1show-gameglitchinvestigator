@@ -125,17 +125,66 @@ def test_range_display_no_hardcoded_100():
     )
 
 
-def test_winning_guess():
-    # If the secret is 50 and guess is 50, it should be a win
-    result = check_guess(50, 50)
-    assert result == "Win"
+# --- Tests for Bug Fix: Hint messages must point in the correct direction ---
+# check_guess() returns (outcome, message). The message must guide the player
+# TOWARD the secret: too high → go lower, too low → go higher.
+# These call the real check_guess() from logic_utils.py, so reversing the
+# hint messages in the source will cause these tests to FAIL.
 
-def test_guess_too_high():
-    # If secret is 50 and guess is 60, hint should be "Too High"
-    result = check_guess(60, 50)
-    assert result == "Too High"
+def test_winning_guess_returns_tuple():
+    """check_guess returns a (outcome, message) tuple, not a bare string."""
+    outcome, message = check_guess(50, 50)
+    assert outcome == "Win"
+    assert "Correct" in message
 
-def test_guess_too_low():
-    # If secret is 50 and guess is 40, hint should be "Too Low"
-    result = check_guess(40, 50)
-    assert result == "Too Low"
+
+def test_too_high_outcome():
+    """Guessing above the secret should return 'Too High' as the outcome."""
+    outcome, _ = check_guess(60, 50)
+    assert outcome == "Too High"
+
+
+def test_too_low_outcome():
+    """Guessing below the secret should return 'Too Low' as the outcome."""
+    outcome, _ = check_guess(40, 50)
+    assert outcome == "Too Low"
+
+
+def test_too_high_hint_says_go_lower():
+    """When guess is too high, the hint must tell the player to go LOWER."""
+    _, message = check_guess(75, 50)
+    assert "LOWER" in message, (
+        f"Hint for a too-high guess should say 'Go LOWER', got: '{message}'"
+    )
+    assert "HIGHER" not in message, (
+        f"Hint for a too-high guess must NOT say 'Go HIGHER', got: '{message}'"
+    )
+
+
+def test_too_low_hint_says_go_higher():
+    """When guess is too low, the hint must tell the player to go HIGHER."""
+    _, message = check_guess(25, 50)
+    assert "HIGHER" in message, (
+        f"Hint for a too-low guess should say 'Go HIGHER', got: '{message}'"
+    )
+    assert "LOWER" not in message, (
+        f"Hint for a too-low guess must NOT say 'Go LOWER', got: '{message}'"
+    )
+
+
+def test_hint_direction_at_boundaries():
+    """Hints should be correct even when the guess is off by just 1."""
+    _, msg_high = check_guess(51, 50)
+    assert "LOWER" in msg_high, f"Guess 51 vs secret 50: expected 'LOWER', got '{msg_high}'"
+
+    _, msg_low = check_guess(49, 50)
+    assert "HIGHER" in msg_low, f"Guess 49 vs secret 50: expected 'HIGHER', got '{msg_low}'"
+
+
+def test_hint_direction_with_large_gap():
+    """Hints should be correct even with a large distance from the secret."""
+    _, msg_high = check_guess(99, 1)
+    assert "LOWER" in msg_high
+
+    _, msg_low = check_guess(1, 99)
+    assert "HIGHER" in msg_low
