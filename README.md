@@ -27,7 +27,7 @@ It wrote the code, ran away, and now the game is unplayable.
 
 - [x] Describe the game's purpose.
 
-      This is a Number Guessing Game built with Streamlit. The player picks a difficulty (Easy/Normal/Hard, each mode changes the number range and the attempt limit), and the app generates a secret random number within a range. The player guesses a secret number within that range, has the option to receive "higher/lower" hints, and tries to find the secret number within a limited number of attempts. And a score is tracked based on performance.
+    This is a Number Guessing Game built with Streamlit. The player picks a difficulty (Easy/Normal/Hard, each mode changes the number range and the attempt limit), and the app generates a secret random number within a range. The player guesses a secret number within that range, has the option to receive "higher/lower" hints, and tries to find the secret number within a limited number of attempts. And a score is tracked based on performance.
 
 - [x] Detail which bugs you found.
   1.  Bug 1: Attempt Count
